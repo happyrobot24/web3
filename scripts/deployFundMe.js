@@ -1,5 +1,5 @@
 
-const {ether} = require("hardhat")
+const {ethers} = require("hardhat")
 
 async function verifyOnSepolia(contract, constructorArgs = []) {
     if (hre.network.name !== "sepolia") {
