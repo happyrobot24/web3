@@ -4,7 +4,9 @@
   "description": "This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "env:encrypt": "openssl enc -aes-256-cbc -salt -in .env -out .env.enc -pass env:ENV_PASSPHRASE",
+    "env:decrypt": "openssl enc -aes-256-cbc -d -in .env.enc -out .env -pass env:ENV_PASSPHRASE"
   },
   "repository": {
     "type": "git",
@@ -20,8 +22,9 @@
   "homepage": "https://github.com/happyrobot24/web3#readme",
   "devDependencies": {
     "@chainlink/contracts": "^1.5.0",
+    "@chainlink/env-enc": "^1.0.5",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.2",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.22.2"
   }
 }
