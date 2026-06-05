@@ -1,0 +1,42 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\n// solhint-disable-next-line interface-starts-with-i\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  function getRoundData(\n    uint80 _roundId\n  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n\n  function latestRoundData()\n    external\n    view\n    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n}\n"
+    },
+    "contracts/FundMe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\nimport {AggregatorV3Interface} from \"@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol\";\n\n// 1.创建一个收款函数\n// 2.记录投资人并查看\n// 3.在锁定期内，达到目标值，生产商可以提款\n// 4.在锁定期内，没有达到目标值，投资人在锁定期以后退款\ncontract FundMe{\n    mapping (address => uint) public funderToAmount;\n    // uint MIN_AMOUNT = 1 * 10 ** 18;  // 1个eth = 10 ** 18 wei\n    uint constant MIN_AMOUNT = 1 * 10 ** 18;  // 1 USD\n    AggregatorV3Interface internal priceFeed;\n\n    uint TARGET_AMOUNT = 10 * 10 ** 18;  // 10 USD\n\n    address public  owner;\n    address erc20TokenAddr;\n    bool public getFundSuccess = false;\n\n    uint deployTime;\n    uint lockTime;\n\n    // 构造函数，部署合约时指定\n    constructor (uint _lockTime) {\n        // sepolia testnet\n        priceFeed = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);\n        owner = msg.sender;\n        deployTime = block.timestamp;\n        lockTime = _lockTime;\n    }\n\n    // 筹款，募集资金。锁定期内\n    function fund() external payable {\n        uint amount = msg.value;\n        uint usdAmount = convertEth2USD(amount);\n        require(usdAmount >= MIN_AMOUNT, \"USD Amount too low!\");\n        require(block.timestamp < deployTime + lockTime, \"window is closed!\");\n        // require(amount >= MIN_AMOUNT, \"Amount too low!\");\n        funderToAmount[msg.sender] += msg.value;\n    }\n\n    function funderAmount(address addr) public view returns (uint) {\n        return funderToAmount[addr];\n    }\n\n    // 减少金额。只允许fundMeToken合约调用\n    function setfunderAmount(address addr, uint amount) external  {\n        require(msg.sender == erc20TokenAddr, \"you are not the erc20 contract!\");\n        funderToAmount[addr] = amount;\n    }\n\n        // 设置erc20合约地址。只有owner可以\n    function setERC20Addr(address addr) public onlyOwner {\n        erc20TokenAddr = addr;\n    }\n\n    /**\n    * Returns the latest answer.\n    */\n    function getChainlinkDataFeedLatestAnswer() public view returns (int) {\n        // prettier-ignore\n        (\n        /* uint80 roundId */\n        ,\n        int answer,\n        /*uint256 startedAt*/\n        ,\n        /*uint256 updatedAt*/\n        ,\n        /*uint80 answeredInRound*/\n        ) = priceFeed.latestRoundData();\n        return answer;\n    }\n\n    function convertEth2USD (uint256 ethAmount) internal view returns ( uint256) {\n        uint256 price = uint256(getChainlinkDataFeedLatestAnswer());\n        // 1 eth = 10^18  price = 10^8 usd\n        // ethAmount * price / 10^18 * 10^8\n        // 入参 1个eth 1 * 10 ** 18\n        // price 是3000 USD 3000 * 10 ** 8\n        // 希望返回 1 * 10 ** 18 * 3000\n        // 1 * 10 ** 18 *  (3000 * 10 ** 8) / (10 ** 8) = 1 * 10 ** 18 * 3000 表示 1个eth 等于 3000 u\n        // \n        return ethAmount * price / (10 ** 8);\n    }\n\n    function transferOwner(address newOwner) public onlyOwner {\n        owner = newOwner;\n    }\n\n    // 提款，锁定期满，金额满足，owner可以提款将合约余额转到用户余额\n    function getFund() external windowClosed onlyOwner {\n        uint contractBalance = address(this).balance;\n        address sender = msg.sender;\n        require(convertEth2USD(contractBalance) >= TARGET_AMOUNT, \"Not Reach Target Amount!\");\n\n        // transfer\n        // payable (sender).transfer(contractBalance);\n        // send\n        // bool success = payable (sender).send(contractBalance);\n        // require(success, \"Failed!\");890\n        // call\n        bool success;\n        (success, ) = payable (sender).call{value: contractBalance}(\"\");\n        require(success, \"Failed!\");\n        funderToAmount[sender] = 0;\n        getFundSuccess = true;\n    }\n\n    // 退款，锁定期满，如果目标未达成，则投资用户可以提走自己的投资金额\n    function refund() external windowClosed {\n        address myAddress = msg.sender;\n        uint contractBalance = address(this).balance;\n        require(contractBalance < TARGET_AMOUNT, \"Target is reached!\");\n        uint myContractAmount = funderToAmount[myAddress];\n        require(myContractAmount > 0, \"you have no balance in this contract!\");\n\n        bool success;\n        (success, ) = payable (myAddress).call{value: myContractAmount}(\"\");\n        require(success, \"Failed!\");\n        funderToAmount[myAddress] = 0;\n    }\n\n    modifier windowClosed() {\n        require(block.timestamp >= deployTime + lockTime, \"window is closed!\");\n        // 业务方法在require后执行\n        _;\n    }\n\n    modifier onlyOwner() {\n        require(owner == msg.sender, \"you are not the owner!\");\n        _;\n    }\n\n}"
+    },
+    "contracts/Lock.sol": {
+      "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.24;\n\n// Uncomment this line to use console.log\n// import \"hardhat/console.sol\";\n\ncontract Lock {\n    uint public unlockTime;\n    address payable public owner;\n\n    event Withdrawal(uint amount, uint when);\n\n    constructor(uint _unlockTime) payable {\n        require(\n            block.timestamp < _unlockTime,\n            \"Unlock time should be in the future\"\n        );\n\n        unlockTime = _unlockTime;\n        owner = payable(msg.sender);\n    }\n\n    function withdraw() public {\n        // Uncomment this line, and the import of \"hardhat/console.sol\", to print a log in your terminal\n        // console.log(\"Unlock time is %o and block timestamp is %o\", unlockTime, block.timestamp);\n\n        require(block.timestamp >= unlockTime, \"You can't withdraw yet\");\n        require(msg.sender == owner, \"You aren't the owner\");\n\n        emit Withdrawal(address(this).balance, block.timestamp);\n\n        owner.transfer(address(this).balance);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "evmVersion": "paris",
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
