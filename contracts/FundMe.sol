@@ -11,7 +11,7 @@ contract FundMe{
     mapping (address => uint) public funderToAmount;
     // uint MIN_AMOUNT = 1 * 10 ** 18;  // 1个eth = 10 ** 18 wei
     uint constant MIN_AMOUNT = 1 * 10 ** 18;  // 1 USD
-    AggregatorV3Interface internal priceFeed;
+    AggregatorV3Interface public priceFeed;
 
     uint TARGET_AMOUNT = 10 * 10 ** 18;  // 10 USD
 

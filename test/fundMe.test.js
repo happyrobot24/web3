@@ -1,5 +1,8 @@
 const { assert } = require("chai")
-const { ethers, deployments, getNamedAccounts } = require("hardhat")
+const hre = require("hardhat")
+const { deployments, getNamedAccounts } = hre
+
+const { ethers } = hre
 
 describe("FundMe Contract Test", function () {
     let fundMe
@@ -13,8 +16,8 @@ describe("FundMe Contract Test", function () {
         deployer = (await getNamedAccounts()).firstAccount
         // 获取部署的 FundMe 合约实例
         const fundMeDeployment = await deployments.get("FundMe")
-        const deployerSigner = await ethers.getSigner(deployer)
-        fundMe = await ethers.getContractAt("FundMe", fundMeDeployment.address, deployerSigner)
+        const deployerSigner = await hre.ethers.getSigner(deployer)
+        fundMe = await hre.ethers.getContractAt("FundMe", fundMeDeployment.address, deployerSigner)
     })
 
     // Test cases will go here
@@ -23,13 +26,19 @@ describe("FundMe Contract Test", function () {
         // const FundMeFactory = await ethers.getContractFactory("FundMe")
         // const fundMe = await FundMeFactory.deploy(600)
         // await fundMe.waitForDeployment()
+        // const [account1] = await ethers.getSigners()
 
         // 获取部署合约的地址
         const deployerAddress = await fundMe.owner()
-        // const [account1] = await ethers.getSigners()
 
         // 断言部署者地址和msg.sender地址相同
         assert.equal(deployerAddress, deployer, "Owner should be the deployer")
     })
+
+    it("test priceFeed is correctly initialized", async function () {
+        const priceFeedAddress = await fundMe.priceFeed()
+        const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+        assert.notEqual(priceFeedAddress, ZERO_ADDRESS, "Price feed address should not be zero")
+    });
 
 });
