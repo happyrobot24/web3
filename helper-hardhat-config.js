@@ -4,9 +4,11 @@ const devlopmentChains = ["hardhat", "local"]
 const LOCK_TIME = 180
 const CONFIRMATIONS = 5
 const networkConfig = {
+    // sepolia testnet
     11155111: {
         ethUsdDataFeed: "0x694AA1769357215DE4FAC081bf1f309aDC325306"
     },
+    // bnb testnet
     97: {
         ethUsdDataFeed: "0x143db3CEEfbdfe5631aDD3E50f7614B6ba708BA7"
     }

@@ -1,26 +1,36 @@
-const getNamedAccounts = require("hardhat-deploy").getNamedAccounts
+const devlopmentChains = require("../helper-hardhat-config").devlopmentChains
+const networkConfig = require("../helper-hardhat-config").networkConfig
+const lockTime = require("../helper-hardhat-config").LOCK_TIME
 
-// function deployFunction2 () {
-//     console.log("Hi!")
-// }
-// module.exports.default = deployFunction2
+const network = require("hardhat").network
+const getNamedAccounts = require("hardhat-deploy").getNamedAccounts
 
 module.exports = async ({getNamedAccounts, deployments}) => {
     // 从getNamedAccounts 获取第一个账户的地址，命名为deployer
     const firstAccount = (await getNamedAccounts()).firstAccount
     console.log("Deploying FundMe with the account:", firstAccount)
 
-    // 获取MockV3Aggregator合约的部署信息，获取其地址
-    const mockV3AggregatorDeployment = await deployments.get("MockV3Aggregator")
-    const mockV3AggregatorAddress = mockV3AggregatorDeployment.address
-    console.log("MockV3Aggregator deployed to:", mockV3AggregatorAddress)
+    // 获取network的名称，如果是本地开发网络，就部署MockV3Aggregator合约，否则使用已部署的价格预言机地址
+    const chainId = network.config.chainId
+    console.log("chainId:", chainId)
+    let priceFeedAddress
+    if (devlopmentChains.includes(network.name)) {
+        // 获取MockV3Aggregator合约的部署信息，获取其地址
+        const mockV3AggregatorDeployment = await deployments.get("MockV3Aggregator")
+        priceFeedAddress = mockV3AggregatorDeployment.address
+        console.log("Using MockV3Aggregator deployed to:", priceFeedAddress)
+    } else {
+        // 从networkConfig中获取当前网络的价格预言机地址，如果没有则使用默认地址
+        priceFeedAddress = networkConfig[chainId]?.ethUsdDataFeed || "0x694AA1769357215DE4FAC081bf1f309aDC325306"
+        console.log("Using existing price feed at:", priceFeedAddress)
+    }
     
     // 从deployments对象中获取deploy函数
     const { deploy } = deployments
     // 调用deploy函数部署合约，传入合约名称和部署参数
     await deploy("FundMe", {
         from: firstAccount,
-        args: [600, mockV3AggregatorAddress], // 构造函数参数，目标锁定期为10分钟和价格预言机地址
+        args: [lockTime, priceFeedAddress], // 构造函数参数，目标锁定期为10分钟和价格预言机地址
         log: true
     })
 }
