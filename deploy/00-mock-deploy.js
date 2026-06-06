@@ -1,4 +1,4 @@
-const { DECIMAL, INITIAL_ANSWER } = require("../helper-hardhat-config")
+const { DECIMAL, INITIAL_ANSWER, devlopmentChains } = require("../helper-hardhat-config")
 
 const getNamedAccounts = require("hardhat-deploy").getNamedAccounts
 
