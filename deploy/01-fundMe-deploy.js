@@ -31,13 +31,17 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     await deploy("FundMe", {
         from: firstAccount,
         args: [lockTime, priceFeedAddress], // 构造函数参数，目标锁定期为10分钟和价格预言机地址
-        log: true
+        log: true,
+        waitConfirmations: networkConfig[chainId]?.blockConfirmations || 1
     })
+
+    // 默认情况下hardhat会缓存上次已经部署的合约 deployments文件夹缓存
+    // 如果需要强制重新部署，可以删除 deployments 文件夹中的缓存文件。或者添加部署参数 force: true 来强制重新部署合约
 
     // 增加合约的verify功能，在 sepolia 网络上部署后自动在 etherscan 上验证合约
     if (chainId === 11155111 && process.env.ETHERSCAN_API_KEY) {
-        console.log("sepolia Waiting for 5 confirmations before verification...")
-        await new Promise(resolve => setTimeout(resolve, 30000)) // 等待30秒，确保Etherscan已同步合约字节码
+        // console.log("sepolia Waiting for 5 confirmations before verification...")
+        // await new Promise(resolve => setTimeout(resolve, 30000)) // 等待30秒，确保Etherscan已同步合约字节码
         await hre.run("verify:verify", {
             address: (await deployments.get("FundMe")).address,
             constructorArguments: [lockTime, priceFeedAddress]

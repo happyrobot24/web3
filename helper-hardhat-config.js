@@ -6,11 +6,13 @@ const CONFIRMATIONS = 5
 const networkConfig = {
     // sepolia testnet
     11155111: {
-        ethUsdDataFeed: "0x694AA1769357215DE4FAC081bf1f309aDC325306"
+        ethUsdDataFeed: "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+        blockConfirmations: 5
     },
     // bnb testnet
     97: {
-        ethUsdDataFeed: "0x143db3CEEfbdfe5631aDD3E50f7614B6ba708BA7"
+        ethUsdDataFeed: "0x143db3CEEfbdfe5631aDD3E50f7614B6ba708BA7",
+        blockConfirmations: 6
     }
 }
 
