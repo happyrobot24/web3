@@ -33,6 +33,22 @@ module.exports = async ({getNamedAccounts, deployments}) => {
         args: [lockTime, priceFeedAddress], // 构造函数参数，目标锁定期为10分钟和价格预言机地址
         log: true
     })
+
+    // 增加合约的verify功能，在 sepolia 网络上部署后自动在 etherscan 上验证合约
+    if (chainId === 11155111 && process.env.ETHERSCAN_API_KEY) {
+        console.log("sepolia Waiting for 5 confirmations before verification...")
+        await new Promise(resolve => setTimeout(resolve, 30000)) // 等待30秒，确保Etherscan已同步合约字节码
+        await hre.run("verify:verify", {
+            address: (await deployments.get("FundMe")).address,
+            constructorArguments: [lockTime, priceFeedAddress]
+        })
+    } else {
+        console.log("Skipping verification on network", network.name)
+    }
+
+
+
+    
 }
 
 module.exports.tags = ["all", "fundMe"]
