@@ -24,6 +24,7 @@ const { devlopmentChains } = require("../../helper-hardhat-config")
         // 获取部署的 FundMe 合约实例
         const fundMeDeployment = await deployments.get("FundMe")
         const deployerSigner = await hre.ethers.getSigner(firstAccount)
+        // 获取第一个账户的 FundMe 合约实例。这样用这个调用的时候就表示第一个账户调用合约
         fundMe = await hre.ethers.getContractAt("FundMe", fundMeDeployment.address, deployerSigner)
         // 获取第二个账户的 FundMe 合约实例。这样用这个调用的时候就表示第二个账户调用合约
         const secondAccountSigner = await hre.ethers.getSigner(secondAccount)
@@ -145,9 +146,12 @@ const { devlopmentChains } = require("../../helper-hardhat-config")
         }
     )
 
-    it("window closed, target reach, funder has balance", 
+    it("window closed, target reach, funder has balance, refund failed", 
         async function() {
-            await fundMe.fund({value: ethers.parseEther("0.1")})
+            await fundMe.fund({value: ethers.parseEther("0.6")})
+            // 打印合约的 余额
+            const balance = await ethers.provider.getBalance(fundMe.target)
+            console.log("Contract balance before refund:", ethers.formatEther(balance), "ETH")
             // make sure the window is closed
             await helpers.time.increase(200)
             await helpers.mine()  
@@ -158,7 +162,11 @@ const { devlopmentChains } = require("../../helper-hardhat-config")
 
     it("window closed, target not reach, funder does not has balance", 
         async function() {
-            await fundMe.fund({value: ethers.parseEther("0.01")})
+            await fundMe.fund({value: ethers.parseEther("0.02")})
+             // 3000 * 0.02 = 60 < 100, target not reached
+            // 打印合约的 余额
+            const balance = await ethers.provider.getBalance(fundMe.target)
+            console.log("Contract first balance before refund:", ethers.formatEther(balance), "ETH")
             // make sure the window is closed
             await helpers.time.increase(200)
             await helpers.mine()  

@@ -13,7 +13,7 @@ contract FundMe {
     uint constant MIN_AMOUNT = 10 * 10 ** 18; // 10 USD
     AggregatorV3Interface public priceFeed;
 
-    uint TARGET_AMOUNT = 100 * 10 ** 18; // 100 USD
+    uint constant TARGET_AMOUNT = 100 * 10 ** 18; // 100 USD
 
     address public owner;
     address erc20TokenAddr;
@@ -123,7 +123,8 @@ contract FundMe {
     function refund() external windowClosed {
         address myAddress = msg.sender;
         uint contractBalance = address(this).balance;
-        require(contractBalance < TARGET_AMOUNT, "Target is reached!");
+        // 目标达成了，不能退款
+        require(contractBalance >= TARGET_AMOUNT, "Target is reached");
         uint myContractAmount = funderToAmount[myAddress];
         require(myContractAmount > 0, "you have no balance in this contract!");
 
@@ -131,7 +132,7 @@ contract FundMe {
         (success, ) = payable(myAddress).call{value: myContractAmount}("");
         require(success, "Failed!");
         funderToAmount[myAddress] = 0;
-        emit RefundByFunder(msg.sender, contractBalance);
+        emit RefundByFunder(msg.sender, myContractAmount);
     }
 
     modifier windowClosed() {
