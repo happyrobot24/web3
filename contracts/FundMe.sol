@@ -10,10 +10,10 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 contract FundMe {
     mapping(address => uint) public funderToAmount;
     // uint MIN_AMOUNT = 1 * 10 ** 18;  // 1个eth = 10 ** 18 wei
-    uint constant MIN_AMOUNT = 10 * 10 ** 18; // 10 USD
+    uint constant public MIN_AMOUNT = 10 * 10 ** 18; // 10 USD
     AggregatorV3Interface public priceFeed;
 
-    uint constant TARGET_AMOUNT = 100 * 10 ** 18; // 100 USD
+    uint constant public TARGET_AMOUNT = 100 * 10 ** 18; // 100 USD
 
     address public owner;
     address erc20TokenAddr;

@@ -167,6 +167,10 @@ const { devlopmentChains } = require("../../helper-hardhat-config")
             // 打印合约的 余额
             const balance = await ethers.provider.getBalance(fundMe.target)
             console.log("Contract first balance before refund:", ethers.formatEther(balance), "ETH")
+            // 打印合约的 TARGET_AMOUNT
+            console.log("Contract TARGET_AMOUNT:", ethers.formatEther(fundMe.TARGET_AMOUNT()), "ETH")
+            // 打印合约的 TARGET_AMOUNT 和MIN_AMOUNT 变量的值
+            console.log("Contract MIN_AMOUNT:", ethers.formatEther(fundMe.MIN_AMOUNT()), "ETH")
             // make sure the window is closed
             await helpers.time.increase(200)
             await helpers.mine()  
