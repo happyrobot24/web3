@@ -35,8 +35,8 @@ contract FundMe{
     function fund() external payable {
         uint amount = msg.value;
         uint usdAmount = convertEth2USD(amount);
-        require(usdAmount >= MIN_AMOUNT, "USD Amount too low!");
         require(block.timestamp < deployTime + lockTime, "window is closed!");
+        require(usdAmount >= MIN_AMOUNT, "USD Amount too low!");
         // require(amount >= MIN_AMOUNT, "Amount too low!");
         funderToAmount[msg.sender] += msg.value;
     }
@@ -124,7 +124,7 @@ contract FundMe{
     }
 
     modifier windowClosed() {
-        require(block.timestamp >= deployTime + lockTime, "window is closed!");
+        require(block.timestamp >= deployTime + lockTime, "window is closed");
         // 业务方法在require后执行
         _;
     }

@@ -8,6 +8,9 @@ module.exports = {
   defaultNetwork: "hardhat",
   // defaultNetwork: "sepolia",
   solidity: "0.8.24",
+  mocha: {
+    timeout: 300000 // 300秒
+  },
   networks: {
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL,
@@ -28,5 +31,8 @@ module.exports = {
     // deployer: {
     //   default: 0
     // }
+  },
+  gasReporter: {
+    enabled: true
   }
 };

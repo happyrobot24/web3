@@ -12,7 +12,8 @@ module.exports = async ({getNamedAccounts, deployments}) => {
 
     // 获取network的名称，如果是本地开发网络，就部署MockV3Aggregator合约，否则使用已部署的价格预言机地址
     const chainId = network.config.chainId
-    console.log("chainId:", chainId)
+    const confirmations = networkConfig[chainId]?.blockConfirmations || 0
+    console.log("chainId:", chainId, "confirmations:", confirmations)
     let priceFeedAddress
     if (devlopmentChains.includes(network.name)) {
         // 获取MockV3Aggregator合约的部署信息，获取其地址
@@ -32,7 +33,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
         from: firstAccount,
         args: [lockTime, priceFeedAddress], // 构造函数参数，目标锁定期为10分钟和价格预言机地址
         log: true,
-        waitConfirmations: networkConfig[chainId]?.blockConfirmations || 1
+        waitConfirmations: confirmations
     })
 
     // 默认情况下hardhat会缓存上次已经部署的合约 deployments文件夹缓存
